@@ -2,8 +2,8 @@ package brain
 
 import (
 	"math/rand"
-	"math"
-	"errors"
+
+	"github.com/goscience/brain/num"
 )
 
 type Perceptron struct {
@@ -16,7 +16,7 @@ func NewPerceptron(inputSize int) *Perceptron {
 	pr.inputSize = inputSize
 
 	for i := 0; i < inputSize; i++ {
-		weight := 2*rand.Float64() - 1
+		weight := 2 * rand.Float64() - 1
 		pr.nodeWeights = append(pr.nodeWeights, weight)
 	}
 
@@ -38,19 +38,19 @@ func Train(
 
 		for j, dataRow := range trainingSet {
 			nodes := pr.GetNodeWeights()
-			weight, _ := dot(dataRow, nodes)
-			normalized := sigmoid(weight)
+			weight, _ := num.Dot(dataRow, nodes)
+			normalized := num.Sigmoid(weight)
 			err := targetSet[j] - normalized
 			derivatives = append(
 				derivatives,
-				err*sigmoidDerivative(normalized),
+				err*num.SigmoidDerivative(normalized),
 			)
 		}
 
-		transpose := transpose(trainingSet)
+		transpose := num.Transpose(trainingSet)
 
 		for k, row := range transpose {
-			adjustment, _ := dot(
+			adjustment, _ := num.Dot(
 				row,
 				derivatives,
 			)
@@ -61,45 +61,7 @@ func Train(
 }
 
 func Predict(pr *Perceptron, data []float64) float64 {
-	vectorDot, _ := dot(data, pr.GetNodeWeights())
+	vectorDot, _ := num.Dot(data, pr.GetNodeWeights())
 
-	return sigmoid(vectorDot)
-}
-
-func sigmoid(weight float64) float64 {
-	return 1 / (1 + math.Exp(-weight))
-}
-
-func sigmoidDerivative(weight float64) float64 {
-	return weight * (1 - weight)
-}
-
-func transpose(matrix [][]float64) [][]float64 {
-	var transpose [][]float64
-
-	lenX := len(matrix[0])
-
-	for x := 0; x < lenX; x++ {
-		var row []float64
-
-		for y := range matrix {
-			row = append(row, matrix[y][x])
-		}
-
-		transpose = append(transpose, row)
-	}
-
-	return transpose
-}
-
-func dot(x, y []float64) (r float64, err error) {
-	if len(x) != len(y) {
-		return 0, errors.New("incompatible lengths")
-	}
-
-	for i, xi := range x {
-		r += xi * y[i]
-	}
-
-	return
+	return num.Sigmoid(vectorDot)
 }
